@@ -1,0 +1,39 @@
+name: Format
+
+on:
+  pull_request:
+    branches: ["**"]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  terraform-fmt:
+    name: Terraform Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: terraform fmt -check
+        run: |
+          set +e
+          output=$(terraform fmt -check -recursive -diff 2>&1)
+          status=$?
+
+          if [ "$status" -ne 0 ]; then
+            {
+              echo "## ❌ Terraform Format 실패"
+              echo "다음 \`.tf\` 파일이 \`terraform fmt\` 규칙을 따르지 않습니다:"
+              echo ""
+              echo '```diff'
+              echo "$output"
+              echo '```'
+              echo ""
+              echo "로컬에서 \`terraform fmt -recursive\` 실행 후 다시 push 해주세요."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          echo "## ✅ Terraform Format 통과" >> "$GITHUB_STEP_SUMMARY"
