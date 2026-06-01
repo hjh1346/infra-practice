@@ -14,4 +14,3 @@ provider "local" {}
 resource "local_file" "test" {
   content  = "Terraform CI test"
   filename = "${path.module}/test.txt"
-}
